@@ -1,6 +1,7 @@
 package org.example.ludoo.Models;
 
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -17,11 +18,12 @@ public class Game {
     private boolean isGameOver = false;
 
     @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Player> players;
 
-    private int currentTurn = 0; // Index of the player whose turn it is
+    private int currentTurn = 0;
     @OneToOne
-    private Player winner;  // Stores the winning player
+    private Player winner;
 
 
 }

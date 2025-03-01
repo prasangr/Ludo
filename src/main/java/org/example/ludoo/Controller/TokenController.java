@@ -33,24 +33,25 @@ public class TokenController {
                                             @PathVariable UUID tokenId,
                                             @PathVariable int diceValue) {
         if (!gameService.isPlayerTurn(gameId, playerId)) {
-            return ResponseEntity.badRequest().body("Not the player's turn.");
+            return ResponseEntity.badRequest().body("Not the player's turn");
         }
 
         if (!tokenService.hasValidMove(gameId, playerId, diceValue)) {
-            return ResponseEntity.badRequest().body("No valid moves available.");
+            return ResponseEntity.badRequest().body("No valid moves available");
         }
 
         boolean moveSuccess = tokenService.moveToken(gameId, playerId, tokenId, diceValue);
 
         if (moveSuccess) {
+            //increment the current turn by 1 and mod by no of players
             gameService.nextTurn(gameId);
-            // Fetch the updated game state
             Optional<Game> updatedGame = gameService.getGameState(gameId);
             updatedGame.ifPresent(game -> webSocketService.notifyGameUpdate(gameId, game));
-
-            return ResponseEntity.ok("Token moved successfully.");
+            System.out.println("Token moved successfully");
+            return ResponseEntity.ok("Token moved successfully");
         } else {
-            return ResponseEntity.badRequest().body("Invalid move.");
+            System.out.println("Invalid move");
+            return ResponseEntity.badRequest().body("Invalid move");
         }
     }
 }

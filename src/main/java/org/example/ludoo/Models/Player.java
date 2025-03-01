@@ -1,7 +1,10 @@
 package org.example.ludoo.Models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,8 +20,31 @@ public class Player {
 
     @ManyToOne
     @JoinColumn(name = "game_id")
+    @JsonBackReference
     private Game game;
 
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Token> tokens; // A player has 4 tokens
+    @JsonManagedReference
+    private List<Token> tokens;
+
+    public Player() {
+     //default for jpa
+    }
+
+    public Player(String name, Game game) {
+        this.id = UUID.randomUUID();
+        this.name = name;
+        this.game = game;
+        this.tokens = initializeTokens();
+    }
+
+    private List<Token> initializeTokens() {
+        List<Token> tokens = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            Token token = new Token(this);
+            token.setPosition(-1);
+            tokens.add(token);
+        }
+        return tokens;
+    }
 }

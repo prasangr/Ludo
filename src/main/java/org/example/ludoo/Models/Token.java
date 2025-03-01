@@ -1,21 +1,33 @@
-package org.example.ludoo.Models;
+// Token.java
+    package org.example.ludoo.Models;
 
-import jakarta.persistence.*;
-import lombok.Data;
+    import com.fasterxml.jackson.annotation.JsonBackReference;
+    import jakarta.persistence.*;
+    import lombok.Data;
+    import java.util.UUID;
 
-import java.util.UUID;
+    @Entity
+    @Data
+    public class Token {
 
-@Entity
-@Data
-public class Token {
+        @Id
+        @GeneratedValue(strategy = GenerationType.UUID)
+        private UUID id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+        private int position = 0;
 
-    private int position = 0; // Track token position on the board
+        @ManyToOne
+        @JoinColumn(name = "player_id")
+        @JsonBackReference
+        private Player player;
 
-    @ManyToOne
-    @JoinColumn(name = "player_id")
-    private Player player;
-}
+        public Token() {
+            // Default constructor for JPA
+        }
+
+        public Token(Player player) {
+            this.id = UUID.randomUUID();
+            this.player = player;
+            this.position = 0;
+        }
+    }

@@ -1,3 +1,4 @@
+// TokenServiceTest.java
 package org.example.ludoo.Service;
 
 import org.example.ludoo.Models.Game;
@@ -7,7 +8,6 @@ import org.example.ludoo.Repository.GameRepository;
 import org.example.ludoo.Repository.TokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,12 +42,19 @@ class TokenServiceTest {
         Player player = new Player();
         player.setId(playerId);
 
-        Token token = new Token();
+        Token token = new Token(player);
         token.setId(tokenId);
         token.setPosition(5);
         token.setPlayer(player);
 
+        player.setTokens(List.of(token)); // Add token to player's tokens list
+
+        Game game = new Game();
+        game.setId(gameId);
+        game.setPlayers(List.of(player));
+
         when(tokenRepository.findById(tokenId)).thenReturn(Optional.of(token));
+        when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
         boolean result = tokenService.moveToken(gameId, playerId, tokenId, 3);
 
@@ -57,7 +64,24 @@ class TokenServiceTest {
     }
 
     @Test
-    void testMoveToken_TokenDoesNotMoveIfNotSix() {
+    void testMoveToken_GameNotFound() {
+        UUID tokenId = UUID.randomUUID();
+        UUID gameId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        Token token = new Token();
+        token.setId(tokenId);
+
+        when(tokenRepository.findById(tokenId)).thenReturn(Optional.of(token));
+        when(gameRepository.findById(gameId)).thenReturn(Optional.empty());
+
+        boolean result = tokenService.moveToken(gameId, playerId, tokenId, 3);
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testMoveToken_MoveToHomeStretch() {
         UUID tokenId = UUID.randomUUID();
         UUID gameId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
@@ -65,17 +89,25 @@ class TokenServiceTest {
         Player player = new Player();
         player.setId(playerId);
 
-        Token token = new Token();
+        Token token = new Token(player);
         token.setId(tokenId);
-        token.setPosition(0);
+        token.setPosition(50);
         token.setPlayer(player);
 
+        player.setTokens(List.of(token));
+
+        Game game = new Game();
+        game.setId(gameId);
+        game.setPlayers(List.of(player));
+
         when(tokenRepository.findById(tokenId)).thenReturn(Optional.of(token));
+        when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-        boolean result = tokenService.moveToken(gameId, playerId, tokenId, 5);
-
-        assertFalse(result);
-        assertEquals(0, token.getPosition());
+        boolean result = tokenService.moveToken(gameId, playerId, tokenId, 3);
+        System.out.println(token.getPosition());
+        assertTrue(result);
+        assertEquals(96, token.getPosition());
+        verify(tokenRepository, times(1)).save(token);
     }
 
     @Test
@@ -86,20 +118,18 @@ class TokenServiceTest {
 
         Player player = new Player();
         player.setId(playerId);
-
-        Token token1 = new Token();
-        token1.setPosition(57);
-
-        Token token2 = new Token();
-        token2.setPosition(57);
-
-        Token token3 = new Token();
-        token3.setPosition(57);
-
-        Token token4 = new Token();
-        token4.setPosition(56);
+        Token token1 = new Token(player);
+        token1.setPosition(100);
+        Token token2 = new Token(player);
+        token2.setPosition(100);
+        Token token3 = new Token(player);
+        token3.setPosition(100);
+        Token token4 = new Token(player);
+        token4.setPosition(99);
         token4.setId(tokenId);
         token4.setPlayer(player);
+
+        player.setTokens(List.of(token1, token2, token3, token4));
 
         Game game = new Game();
         game.setId(gameId);
@@ -113,6 +143,7 @@ class TokenServiceTest {
 
         assertTrue(result);
         assertTrue(game.isGameOver());
+    //    System.out.println(game.getWinner());
         assertEquals(player, game.getWinner());
     }
 }

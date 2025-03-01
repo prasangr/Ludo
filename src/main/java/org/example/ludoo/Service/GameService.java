@@ -5,6 +5,8 @@ import org.example.ludoo.Models.Game;
 import org.example.ludoo.Models.Player;
 import org.example.ludoo.Repository.GameRepository;
 import org.example.ludoo.Repository.PlayerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -17,36 +19,33 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final PlayerRepository playerRepository;
-    private final TokenService tokenService;
 
-    public GameService(GameRepository gameRepository, PlayerRepository playerRepository, TokenService tokenService) {
+
+    public GameService(GameRepository gameRepository, PlayerRepository playerRepository) {
         this.gameRepository = gameRepository;
         this.playerRepository = playerRepository;
+    }
+    private TokenService tokenService;
+
+    @Autowired
+    public void setTokenService(@Lazy TokenService tokenService) {
         this.tokenService = tokenService;
     }
-
     public Game createGame() {
         Game game = new Game();
         return gameRepository.save(game);
     }
 
-    // Allow players to join a game (max 4 players)
-    public Optional<Player> joinGame(UUID gameId, String playerName) {
-        Optional<Game> gameOpt = gameRepository.findById(gameId);
-
-        if (gameOpt.isPresent()) {
-            Game game = gameOpt.get();
-
-            if (game.getPlayers().size() < 4) {
-                Player player = new Player();
-                player.setName(playerName);
-                player.setGame(game);
-
+    public Optional<Player> joinGame(UUID gameId,String playerName) {
+        return gameRepository.findById(gameId).map(game -> {
+            if (game.getPlayers().size()<4) {
+                Player player = new Player(playerName,game);
                 playerRepository.save(player);
-                return Optional.of(player);
+                return player;
+            } else {
+                return null; // if more than 4 players
             }
-        }
-        return Optional.empty();
+        });
     }
 
     public Optional<Game> getGameState(UUID gameId) {
@@ -57,7 +56,7 @@ public class GameService {
     public boolean isPlayerTurn(UUID gameId, UUID playerId) {
         Optional<Game> gameOpt = gameRepository.findById(gameId);
         if (gameOpt.isPresent()) {
-            Game game = gameOpt.get();
+            Game game =gameOpt.get();
             List<Player> players = game.getPlayers();
 
             if (!players.isEmpty()) {
